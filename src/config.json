@@ -1,0 +1,14 @@
+{
+  "service": {
+    "port": 8080
+  },
+  "connection": {
+    "user": "sa",
+    "password": "Yukon900",
+    "server": "192.168.0.10",
+    "database": "test"
+  },
+  "api": {
+    "tables": ["people", "games"]
+  }
+}
