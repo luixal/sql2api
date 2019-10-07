@@ -9,14 +9,38 @@ const QueryBuilder = {
     // paginated:
     if (query.page) {
       // check pagination params:
-      let page = parseInt(query.page) || 0;
-      let perPage = parseInt(query.perPage) || 10;
-      let orderBy = isValidIdentifier(query.orderBy) ? query.orderBy : 'id';
-      let order = isValidIdentifier(query.order) ? query.order : 'asc';
-      // return paginated query:
-      return `select * from ${table} order by ${orderBy} ${order} offset ${page * perPage} rows fetch next ${perPage} rows only`;
+      let page = 0;
+      let perPage = 10;
+      let orderBy = 'id';
+      let order = 'asc';
+      let whereFilter = [];
+      //let compareUsingLike = false;
+
+      Object.keys(query).map(
+        (key) => {
+          if (key.toLowerCase() === 'page') page = query[key];
+          else if (key.toLowerCase() === 'perpage') perPage = query[key];
+          else if (key.toLowerCase() === 'orderby') orderBy = query[key];
+          else if (key.toLowerCase() === 'order') order = query[key];
+          //else if (key.toLowerCase() === 'compareusinglike') compareUsingLike = query[key];
+          else whereFilter.push({field: key, value: query[key]})
+        }
+      )
+
+      // where clause builder:
+      generateWhereSubQuery = function(whereFilter) {
+        if (whereFilter) return `${whereFilter.field} = '${whereFilter.value}'`;
+      }
+
+      // build where statement:
+      let whereStatement;
+      if (whereFilter.length) whereStatement = whereFilter.map( filter => generateWhereSubQuery(filter) ).join(' AND ');
+      whereStatement += ' AND (FEC_ALTA_EMPLEADO <= GETDATE() OR FEC_BAJA <= GETDATE())';
+      // build SQL query:
+      let sqlQuery = `select * from ${table} ${whereStatement ? `where ${whereStatement}` : ''} order by ${orderBy} ${order} offset ${page * perPage} rows fetch next ${perPage} rows only`;
+      return sqlQuery;
     } else {
-      // non-paginated:
+      // default limited:
       return `select top 100 * from ${table}`;
     }
   }

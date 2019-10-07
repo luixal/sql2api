@@ -1,3 +1,7 @@
+
+require("@babel/core").transform("code", {
+  plugins: ["@babel/plugin-proposal-optional-chaining"]
+});
 //Initiallising node modules
 var express = require("express");
 var bodyParser = require("body-parser");

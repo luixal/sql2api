@@ -3,12 +3,14 @@
     "port": 8080
   },
   "connection": {
-    "user": "sa",
-    "password": "Yukon900",
-    "server": "192.168.0.10",
-    "database": "test"
+    "user": "asisto",
+    "password": "C1@c3",
+    "server": "10.176.6.191",
+    "port": 1432,
+    "database": "Meta4Dump",
+    "instance": "CLUSASISTODB2016"
   },
   "api": {
-    "tables": ["people", "games"]
+    "tables": ["M4_FASES_ALTA_SERVO"]
   }
 }
