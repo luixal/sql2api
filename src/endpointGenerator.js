@@ -43,6 +43,38 @@ const QueryBuilder = {
       // default limited:
       return `select top 100 * from ${table}`;
     }
+  },
+
+  complexQuery: function(workCenterId) {
+    if (workCenterId) return `
+      WITH META4SYNC AS (
+  SELECT ROW_NUMBER() OVER(PARTITION BY [ID_EMPLEADO] ORDER BY [FEC_ALTA_EMPLEADO] DESC, ISNULL([FEC_BAJA], '2999/01/01') DESC) AS row_num,
+          [ID_EMPLEADO]
+        ,[NOMBRE]
+        ,[APELLIDO_1]
+        ,[APELLIDO_2]
+        ,[NOMBRE_COMPLETO]
+        ,[FEC_ALTA_EMPLEADO]
+        ,ISNULL([FEC_BAJA], '2999/01/01') as FEC_BAJA
+        ,[PERSONAL_ACTIVO]
+        ,[ID_CENTRO_TRABAJO]
+        ,[ESTRUCTURA]
+        ,[N_EMPRESA]
+        ,[CIF]
+        ,[DIRECCION]
+        ,[ID_CATEGORIA]
+        ,[N_CATEGORIA]
+    FROM [Meta4Dump].[dbo].[M4_FASES_ALTA_SERVO]
+    WHERE FEC_ALTA_EMPLEADO < GETDATE()+1 and Estructura is not null
+    )
+    SELECT row_num, [ID_EMPLEADO] ,[NOMBRE], [APELLIDO_1], [APELLIDO_2], [NOMBRE_COMPLETO], [FEC_ALTA_EMPLEADO], ISNULL([FEC_BAJA], '2999/01/01') as FEC_BAJA, [PERSONAL_ACTIVO], [ID_CENTRO_TRABAJO], [ESTRUCTURA], [N_EMPRESA], [CIF], [DIRECCION], [ID_CATEGORIA], [N_CATEGORIA]
+    FROM META4SYNC
+    WHERE
+    row_num = 1
+
+     and ID_CENTRO_TRABAJO = ${workCenterId}
+    ORDER BY FEC_ALTA_EMPLEADO DESC, FEC_BAJA DESC
+    `;
   }
 }
 
@@ -55,9 +87,26 @@ const generateEndpoints = function(app, table, executeQuery, path='/api/') {
 
   app.get(
     `${path}${table}`,
-    function(req , res){
+    function(req , res) {
       executeQuery(
         QueryBuilder.selectBuilder(table, req.query),
+        (err, result) => {
+          if (err) {
+            console.log(`Error: ${err}`);
+            res.send(err);
+          } else {
+            res.send(result.recordset)
+          }
+        }
+      );
+    }
+  );
+
+  app.get(
+    `${path}${table}/complex/:workCenterId`,
+    function(req , res) {
+      executeQuery(
+        QueryBuilder.complexQuery(req.params.workCenterId),
         (err, result) => {
           if (err) {
             console.log(`Error: ${err}`);
